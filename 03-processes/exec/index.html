@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>fork() then exec()</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1><code>fork()</code> then <code>exec()</code></h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="fork_exec.c">fork_exec.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function parent(f, st) {
+  return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['forkreturn', f], ['Program', 'fork_exec'], ['State', st]] };
+}
+function child(prog, st, hot) {
+  return { title: 'Child', tag: 'C', rows: [['Real ID', '1001'], ['forkreturn', '0'], ['Program', prog, hot], ['State', st]] };
+}
+var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
+
+Stepper({
+  tags: { P: 'solid', C: 'outline' },
+  code: [
+    'forkreturn = fork()',
+    'if forkreturn == 0:',
+    '    exec("ls")',
+    '    print "exec failed"',
+    '    exit(1)',
+    'else:',
+    '    wait()',
+    '    print "Child complete"'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'P' }], panels: [parent('not set yet', 'running'), noChild], out: [],
+      text: `One process, the parent, ID 1000. It's about to call fork().` },
+    { at: [{ line: 0, tag: 'P' }, { line: 0, tag: 'C' }], panels: [parent('1001', 'running'), child('fork_exec (a copy)', 'running')], out: [],
+      text: `fork() makes the child, a copy running the same program. The parent gets 1001 and the child gets 0.` },
+    { at: [{ line: 1, tag: 'P' }, { line: 1, tag: 'C' }], panels: [parent('1001', 'running'), child('fork_exec (a copy)', 'running')], out: [],
+      text: `Both check forkreturn. The parent goes to else, and the child goes into the if.` },
+    { at: [{ line: 6, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('1001', 'waiting'), child('ls', 'running', true)], out: [],
+      text: `The parent waits. The child calls exec("ls"), which replaces the child's program with ls. It's still process 1001, just running different code.` },
+    { at: [{ line: 6, tag: 'P' }], panels: [parent('1001', 'waiting'), child('ls', 'running')], out: ['fork_exec  fork_exec.c'],
+      text: `The child is running ls now, so it lists the files in the folder. The two lines after exec() never run, because that code isn't in the child anymore.` },
+    { at: [{ line: 6, tag: 'P' }], panels: [parent('1001', 'waking up'), child('ls', 'finished')], out: ['fork_exec  fork_exec.c'],
+      text: `ls finishes and the child exits. The OS wakes the parent up.` },
+    { at: [{ line: 7, tag: 'P' }], panels: [parent('1001', 'running'), noChild], out: ['fork_exec  fork_exec.c', 'Child complete'],
+      text: `The parent prints its message. fork() made the new process, and exec() gave it a new program. That pair is how almost every program on Linux gets started.` }
+  ]
+});
+</script>
+</body>
+</html>

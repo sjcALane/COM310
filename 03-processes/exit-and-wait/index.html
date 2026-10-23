@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>exit() and wait()</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1><code>exit()</code> and <code>wait()</code></h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="exit_wait.c">exit_wait.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function parent(code, st, hot) {
+  return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['forkreturn', '1001'], ['code', code, hot], ['State', st]] };
+}
+function child(code, st, hot) {
+  return { title: 'Child', tag: 'C', rows: [['Real ID', '1001'], ['forkreturn', '0'], ['Exit code', code, hot], ['State', st]] };
+}
+var noChild = { title: 'Child', tag: 'C', gone: 'Removed by the OS' };
+
+Stepper({
+  tags: { P: 'solid', C: 'outline' },
+  code: [
+    'forkreturn = fork()',
+    'if forkreturn == 0:',
+    '    print "Child: exiting with code 7"',
+    '    exit(7)',
+    'else:',
+    '    code = wait()',
+    '    print "Parent: got exit code", code'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'P' }, { line: 0, tag: 'C' }], panels: [parent('not set yet', 'running'), child('not set yet', 'running')], out: [],
+      text: `fork() makes the child. The parent gets 1001 and the child gets 0, same as always.` },
+    { at: [{ line: 5, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('not set yet', 'waiting'), child('not set yet', 'running')], out: ['Child: exiting with code 7'],
+      text: `The parent goes straight to wait() and sleeps. The child prints its message.` },
+    { at: [{ line: 5, tag: 'P' }, { line: 3, tag: 'C' }], panels: [parent('not set yet', 'waiting'), child('7', 'zombie', true)], out: ['Child: exiting with code 7'],
+      text: `The child calls exit(7) and stops running. The OS can't throw it away yet, because the parent may want to know how it ended. So the OS keeps a small record that holds the exit code. A finished process waiting to be collected is called a zombie.` },
+    { at: [{ line: 5, tag: 'P' }], panels: [parent('7', 'running', true), noChild], out: ['Child: exiting with code 7'],
+      text: `wait() wakes the parent and hands it the child's exit code, 7. Now that the parent has collected it, the OS removes the zombie for good.` },
+    { at: [{ line: 6, tag: 'P' }], panels: [parent('7', 'running'), noChild], out: ['Child: exiting with code 7', 'Parent: got exit code 7'],
+      text: `The parent prints the code. If a parent never calls wait(), its finished children stay zombies until the parent itself exits.` }
+  ]
+});
+</script>
+</body>
+</html>

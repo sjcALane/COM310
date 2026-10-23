@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>exec() replaces the program</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1><code>exec()</code> replaces the program</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="exec_replace.c">exec_replace.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function proc(prog, st, hot) {
+  return { title: 'The process', tag: 'P', rows: [['Real ID', '1000'], ['Program', prog, hot], ['State', st]] };
+}
+
+Stepper({
+  tags: { P: 'solid' },
+  code: [
+    'print "I am process", my_id',
+    'exec("ps", my_id)',
+    'print "This line never prints"'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'P' }], panels: [proc('exec_replace', 'running')], out: ["I am process 1000 and I'm about to run ps"],
+      text: `One process, ID 1000, running our program. It prints its ID.` },
+    { at: [{ line: 1, tag: 'P' }], panels: [proc('ps', 'running', true)], out: ["I am process 1000 and I'm about to run ps"],
+      text: `exec() doesn't make a new process. It wipes out this process's code and variables and loads the ps program in their place. The ID stays 1000.` },
+    { at: [], panels: [proc('ps', 'running')], out: ["I am process 1000 and I'm about to run ps", '  PID COMMAND', ' 1000 ps'],
+      text: `Now ps runs. We asked it to report on process 1000, and it shows that 1000 is running ps. Same process, different program.` },
+    { at: [], panels: [proc('ps', 'finished')], out: ["I am process 1000 and I'm about to run ps", '  PID COMMAND', ' 1000 ps'],
+      text: `When ps finishes, the process ends. The last line of our program never ran, because our program was gone the moment exec() worked. exec() only comes back if it fails.` }
+  ]
+});
+</script>
+</body>
+</html>

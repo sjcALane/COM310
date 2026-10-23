@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A tiny shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>A tiny shell</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="mini_shell.c">mini_shell.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function shell(f, st) {
+  return { title: 'Shell', tag: 'S', rows: [['Real ID', '1000'], ['forkreturn', f], ['Program', 'mini_shell'], ['State', st]] };
+}
+function child(prog, st, hot) {
+  return { title: 'Child', tag: 'C', rows: [['Real ID', '1001'], ['forkreturn', '0'], ['Program', prog, hot], ['State', st]] };
+}
+var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
+var DATE = 'Fri Oct 23 16:45:12 EDT 2026';
+
+Stepper({
+  tags: { S: 'solid', C: 'outline' },
+  code: [
+    'loop forever:',
+    '    print "mysh> "',
+    '    command = read a line',
+    '    if command is "exit": stop',
+    '    forkreturn = fork()',
+    '    if forkreturn == 0:',
+    '        exec(command)',
+    '    else:',
+    '        wait()'
+  ],
+  steps: [
+    { at: [{ line: 1, tag: 'S' }], panels: [shell('not set yet', 'running'), noChild], out: ['mysh> '],
+      text: `The shell prints a prompt.` },
+    { at: [{ line: 2, tag: 'S' }], panels: [shell('not set yet', 'waiting for you to type'), noChild], out: ['mysh> date'],
+      text: `The shell waits for a command. You type date and press Enter.` },
+    { at: [{ line: 3, tag: 'S' }], panels: [shell('not set yet', 'running'), noChild], out: ['mysh> date'],
+      text: `The command isn't exit, so the shell keeps going.` },
+    { at: [{ line: 4, tag: 'S' }, { line: 4, tag: 'C' }], panels: [shell('1001', 'running'), child('mini_shell (a copy)', 'running')], out: ['mysh> date'],
+      text: `The shell forks. Now there's a copy of the shell, process 1001.` },
+    { at: [{ line: 8, tag: 'S' }, { line: 6, tag: 'C' }], panels: [shell('1001', 'waiting'), child('date', 'running', true)], out: ['mysh> date'],
+      text: `The shell waits. The child calls exec("date") and turns into the date program.` },
+    { at: [{ line: 8, tag: 'S' }], panels: [shell('1001', 'waiting'), child('date', 'running')], out: ['mysh> date', DATE],
+      text: `date prints the date and time.` },
+    { at: [{ line: 8, tag: 'S' }], panels: [shell('1001', 'waking up'), child('date', 'finished')], out: ['mysh> date', DATE],
+      text: `date exits, and the shell wakes up.` },
+    { at: [{ line: 1, tag: 'S' }], panels: [shell('1001', 'running'), noChild], out: ['mysh> date', DATE, 'mysh> '],
+      text: `Back to the top of the loop for a new prompt. Another command would get a brand-new child with a new ID, like 1002.` },
+    { at: [{ line: 3, tag: 'S' }], panels: [shell('1001', 'finished'), noChild], out: ['mysh> date', DATE, 'mysh> exit'],
+      text: `You type exit, so the shell leaves the loop and ends. bash does the same thing every time you press Enter, with a lot more features on top.` }
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,10 +1,11 @@
 // Shared stepper for COM310 demos.
-// Each page calls Stepper({ code, tags, steps }). See _template/index.html for the format.
+// Each page calls Stepper({ code, tags, steps, panelColumns }). See _template/index.html for the format.
 function Stepper(cfg) {
   var i = 0;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
   var tags = cfg.tags || {};
+  if (cfg.panelColumns === 2) document.getElementById('panels').classList.add('cols-2');
 
   function tagHTML(t) { return '<span class="tag ' + (tags[t] || 'outline') + '">' + esc(t) + '</span>'; }
 

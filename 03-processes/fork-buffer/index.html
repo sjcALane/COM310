@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The print buffer and fork()</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>The print buffer and <code>fork()</code></h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="fork_buffer.c">fork_buffer.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function parent(buf, st, hot) {
+  return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['Print buffer', buf, hot], ['State', st]] };
+}
+function child(buf, st, hot) {
+  return { title: 'Child', tag: 'C', rows: [['Real ID', '1001'], ['Print buffer', buf, hot], ['State', st]] };
+}
+var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist yet" };
+
+Stepper({
+  tags: { P: 'solid', C: 'outline' },
+  code: [
+    'print "hello "',
+    'fork()',
+    'print "world\\n"'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'P' }], panels: [parent('"hello "', 'running', true), noChild], out: [],
+      text: `printf doesn't put text on the screen right away. It saves it in a print buffer inside the process's memory and writes it out when it sees a newline. So "hello " is waiting in the buffer, and the screen is still empty.` },
+    { at: [{ line: 1, tag: 'P' }, { line: 1, tag: 'C' }], panels: [parent('"hello "', 'running'), child('"hello "', 'running', true)], out: [],
+      text: `fork() copies the process's memory, and the print buffer is part of that memory. Now the child has its own copy of "hello " waiting in its buffer too.` },
+    { at: [{ line: 2, tag: 'P' }, { line: 1, tag: 'C' }], panels: [parent('empty', 'running', true), child('"hello "', 'running')], out: ['hello world'],
+      text: `The parent adds "world" and a newline. The newline makes it write out the whole buffer, so "hello world" appears on screen.` },
+    { at: [{ line: 2, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('empty', 'finished'), child('empty', 'running', true)], out: ['hello world', 'hello world'],
+      text: `The child does the same with its own buffer, so "hello world" prints a second time. The child could just as easily go first, and the output would look the same.` },
+    { at: [], panels: [parent('empty', 'finished'), child('empty', 'finished')], out: ['hello world', 'hello world'],
+      text: `"hello " never printed twice. It was copied before it was ever printed. The fix is to call fflush(stdout) before fork(), which empties the buffer so there's nothing left for the child to copy.` }
+  ]
+});
+</script>
+</body>
+</html>
