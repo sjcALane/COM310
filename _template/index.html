@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo name</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Chapter name</a></div>
+  <h1>Demo name</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="example.c">example.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+// Copy this folder into a chapter folder, rename it, and fill this in.
+// code:  the pseudocode, one line per string.
+// tags:  the label for each process or thread and its style (solid, outline, or dashed).
+// steps: one object per click.
+//   at:     which code line each process is on (line numbers start at 0).
+//   panels: one box per process or thread. rows are [label, value] or [label, value, true] to underline a value that just changed.
+//           Use { title, tag, gone: "Doesn't exist right now" } for a process that hasn't started or has ended.
+//   out:    everything printed so far.
+//   text:   the explanation shown under the output.
+Stepper({
+  tags: { A: 'solid', B: 'outline' },
+  code: [
+    'first line of pseudocode',
+    'second line'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'A' }],
+      panels: [{ title: 'Process A', tag: 'A', rows: [['x', '1']] }, { title: 'Process B', tag: 'B', gone: "Doesn't exist right now" }],
+      out: [],
+      text: 'Explain the first step here.' },
+    { at: [{ line: 1, tag: 'A' }],
+      panels: [{ title: 'Process A', tag: 'A', rows: [['x', '2', true]] }, { title: 'Process B', tag: 'B', gone: "Doesn't exist right now" }],
+      out: ['something printed'],
+      text: 'Explain the second step here.' }
+  ]
+});
+</script>
+</body>
+</html>

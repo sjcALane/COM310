@@ -1,6 +1,6 @@
 # fork()
 
-Open the [step-through walkthrough](https://sjcalane.github.io/COM310/fork/) to trace a parent and child process line by line.
+Open the [step-through walkthrough](https://sjcalane.github.io/COM310/03-processes/fork/) to trace a parent and child process line by line.
 
 | File | What it shows |
 |---|---|

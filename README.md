@@ -1,10 +1,10 @@
 # COM310 Operating Systems
 
-Demos for COM310 Operating Systems. Each folder has an interactive walkthrough you can open in a browser and C code you can compile and run on Linux.
+Demos for COM310 Operating Systems. Each demo has a walkthrough you can open in a browser and C code you can compile and run on Linux.
 
-## Demos
+## Chapter 3: Processes
 
-- **fork()**: [Step-through walkthrough](https://sjcalane.github.io/COM310/fork/) and [C code](fork/)
+- **fork()**: [walkthrough](https://sjcalane.github.io/COM310/03-processes/fork/) and [code](03-processes/fork/)
 
 ## Running the C code
 
