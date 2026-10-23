@@ -13,30 +13,58 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Message passing with a pipe</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="watch">
+    <h2>Watch it happen</h2>
+    <div class="stage" data-role="stage"></div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="all">Play all</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
-  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
   <div class="files">C code: <a href="pipe_demo.c">pipe_demo.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
+Player({
+  root: 'watch',
+  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
+  clips: [
+    { src: 'clips/01.mp4', text: "pipe() makes a one-way channel inside the kernel. The parent gets two file descriptors: fd[0] for the read end and fd[1] for the write end." },
+    { src: 'clips/02.mp4', text: "fork() copies the file descriptors, so the child is connected to both ends of the same pipe." },
+    { src: 'clips/03.mp4', text: "Each process closes the end it won't use. Now there's one path: the parent writes and the child reads." },
+    { src: 'clips/04.mp4', text: "write() copies \"Greetings\" into the pipe. Unlike shared memory, every message goes through the kernel." },
+    { src: 'clips/05.mp4', text: "read() copies the message out to the child, and it's gone from the pipe." },
+    { src: 'clips/06.mp4', text: "When the parent closes its write end, no write ends are left. Now read() returns 0, which tells the child nothing more is coming." }
+  ]
+});
+
 function parent(r, w, st, hot) {
   return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['fd[0] read end', r, hot === 'r'], ['fd[1] write end', w, hot === 'w'], ['State', st]] };
 }
@@ -50,6 +78,7 @@ var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist yet" };
 var OUT = ['Child read: Greetings'];
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline' },
   code: [
     'pipe(fd)',

@@ -13,30 +13,56 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Tracing <code>fork()</code></h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="watch">
+    <h2>Watch it happen</h2>
+    <div class="stage" data-role="stage"></div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="all">Play all</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
-  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
   <div class="files">C code: <a href="fork_demo.c">fork_demo.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
+Player({
+  root: 'watch',
+  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
+  clips: [
+    { src: 'clips/01.mp4', text: "Before fork() there's one process, ID 1000. Its memory holds the program's code, its variables like x = 10, and its stack." },
+    { src: 'clips/02.mp4', text: "fork() asks the OS to copy the whole process. The copy is the child. It gets a new ID, 1001, but the same code, the same variables, and the same spot in the program." },
+    { src: 'clips/03.mp4', text: "The only difference is what fork() returns. The parent gets the child's ID, 1001. The child gets 0." },
+    { src: 'clips/04.mp4', text: "From here on, each process has its own memory. When the child changes x to 15, the parent's x is still 10." }
+  ]
+});
+
 function parent(f, x, st, hot) {
   return { title: 'Parent', tag: 'P', rows: [
     ['Real ID (getpid)', '1000'], ['forkreturn', f, hot === 'f'], ['x', x, hot === 'x'], ['State', st]
@@ -50,6 +76,7 @@ function child(f, x, st, hot) {
 var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline' },
   code: [
     'x = 10',

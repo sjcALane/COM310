@@ -13,29 +13,70 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1><code>exit()</code> and <code>wait()</code></h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="figure">
+    <h2>See it on a timeline</h2>
+    <div class="fig">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="Two timelines showing how long a finished child stays a zombie">
+        <text x="20" y="34" class="title">When the parent is already waiting, like our program</text>
+        <text x="20" y="88">Parent</text>
+        <text x="20" y="138">Child</text>
+        <line class="run" x1="130" y1="82" x2="260" y2="82"/>
+        <line class="wait" x1="260" y1="82" x2="560" y2="82"/>
+        <line class="run" x1="560" y1="82" x2="900" y2="82"/>
+        <line class="run" x1="260" y1="132" x2="560" y2="132"/>
+        <line class="zombie" x1="560" y1="132" x2="572" y2="132"/>
+        <line class="tick" x1="260" y1="60" x2="260" y2="150"/>
+        <line class="tick" x1="566" y1="60" x2="566" y2="150"/>
+        <text x="270" y="68" class="note mono">fork(), then wait()</text>
+        <text x="580" y="68" class="note mono">wait() returns 7</text>
+        <text x="580" y="140" class="note">exit(7), a zombie for an instant</text>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+        <text x="20" y="214" class="title">When the parent is busy and calls wait() later</text>
+        <text x="20" y="268">Parent</text>
+        <text x="20" y="318">Child</text>
+        <line class="run" x1="130" y1="262" x2="900" y2="262"/>
+        <line class="run" x1="260" y1="312" x2="460" y2="312"/>
+        <line class="zombie" x1="460" y1="312" x2="720" y2="312"/>
+        <line class="tick" x1="260" y1="240" x2="260" y2="330"/>
+        <line class="tick" x1="460" y1="240" x2="460" y2="330"/>
+        <line class="tick" x1="720" y1="240" x2="720" y2="330"/>
+        <text x="270" y="248" class="note mono">fork()</text>
+        <text x="470" y="248" class="note mono">exit(7)</text>
+        <text x="730" y="248" class="note mono">wait() returns 7</text>
+        <text x="470" y="345" class="note">zombie: finished, but not collected yet</text>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
+        <line class="run" x1="130" y1="382" x2="180" y2="382"/><text x="190" y="388" class="note">running</text>
+        <line class="wait" x1="290" y1="382" x2="340" y2="382"/><text x="350" y="388" class="note">waiting</text>
+        <line class="zombie" x1="450" y1="382" x2="500" y2="382"/><text x="510" y="388" class="note">zombie</text>
+      </svg>
+    </div>
+    <p class="cap">A finished child stays a zombie until its parent collects it with wait(). In our program the parent is already waiting, so that only takes an instant.</p>
+  </section>
 
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
+
   <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="exit_wait.c">exit_wait.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
 function parent(code, st, hot) {
   return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['forkreturn', '1001'], ['code', code, hot], ['State', st]] };
@@ -46,6 +87,7 @@ function child(code, st, hot) {
 var noChild = { title: 'Child', tag: 'C', gone: 'Removed by the OS' };
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline' },
   code: [
     'forkreturn = fork()',

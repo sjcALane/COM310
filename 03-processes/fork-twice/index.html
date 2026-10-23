@@ -13,60 +13,47 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Two forks, four processes</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="watch">
+    <h2>Watch it happen</h2>
+    <div class="stage" data-role="stage"></div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="all">Play all</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="program">
+    <h2>The program</h2>
+    <div class="code" aria-label="Program">
+      <div class="ln"><span class="marks"></span>fork()</div>
+      <div class="ln"><span class="marks"></span>fork()</div>
+      <div class="ln"><span class="marks"></span>print "hello from", my_id, parent_id</div>
+    </div>
+    <div>
+      <div class="out-label">What it prints</div>
+      <div class="out">hello from process 1002, my parent is 1000<br>hello from process 1003, my parent is 1001<br>hello from process 1001, my parent is 1000<br>hello from process 1000, my parent is 900</div>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
   <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="fork_twice.c">fork_twice.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
-function proc(name, tag, id, parent, made) {
-  return { title: 'Process ' + name, tag: tag, rows: [['Real ID', id], ['Parent', parent], ['Made by', made]] };
-}
-function gone(name, tag) { return { title: 'Process ' + name, tag: tag, gone: "Doesn't exist yet" }; }
-var A = proc('A', 'A', '1000', '900 (shell)', 'the shell');
-var B = proc('B', 'B', '1001', '1000', 'A, 1st fork');
-var C = proc('C', 'C', '1002', '1000', 'A, 2nd fork');
-var D = proc('D', 'D', '1003', '1001', 'B, 2nd fork');
-
-Stepper({
-  tags: { A: 'solid', B: 'outline', C: 'dashed', D: 'double' },
-  panelColumns: 2,
-  code: [
-    'fork()',
-    'fork()',
-    'print "hello from", my_id, parent_id'
-  ],
-  steps: [
-    { at: [{ line: 0, tag: 'A' }], panels: [A, gone('B', 'B'), gone('C', 'C'), gone('D', 'D')], out: [],
-      text: `There's one process, A. It's about to call fork() for the first time.` },
-    { at: [{ line: 1, tag: 'A' }, { line: 1, tag: 'B' }], panels: [A, B, gone('C', 'C'), gone('D', 'D')], out: [],
-      text: `The first fork() copies A to make B. Both are now on the second line, and both are about to call fork().` },
-    { at: [{ line: 2, tag: 'A' }, { line: 2, tag: 'B' }, { line: 2, tag: 'C' }, { line: 2, tag: 'D' }], panels: [A, B, C, D], out: [],
-      text: `Both A and B call fork(). A makes C, and B makes D. That's four processes, and all four are on the print line.` },
-    { at: [], panels: [A, B, C, D],
-      out: ['hello from process 1002, my parent is 1000', 'hello from process 1003, my parent is 1001', 'hello from process 1001, my parent is 1000', 'hello from process 1000, my parent is 900'],
-      text: `All four print. The order can change from run to run, because the scheduler decides who goes first.` },
-    { at: [], panels: [A, B, C, D],
-      out: ['hello from process 1002, my parent is 1000', 'hello from process 1003, my parent is 1001', 'hello from process 1001, my parent is 1000', 'hello from process 1000, my parent is 900'],
-      text: `Use the parent IDs to draw the family tree. A is the parent of B and C, and B is the parent of D. Every fork() doubles the count, so 2 forks make 4 processes and 3 forks would make 8.` }
+Player({
+  root: 'watch',
+  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
+  clips: [
+    { src: 'clips/01.mp4', text: "Time runs left to right, and each line is a process. We start with one process, 1000." },
+    { src: 'clips/02.mp4', text: "The first fork() makes a copy, 1001. Now there are two processes, and both are about to run the second fork()." },
+    { src: 'clips/03.mp4', text: "Both processes run the second fork(), so each one makes a child. That's 4 processes, and each one prints hello, which is why the program prints 4 lines." },
+    { src: 'clips/04.mp4', text: "A third fork() would double it again to 8. Every fork() doubles the count, so n forks make 2 to the n processes." }
   ]
 });
 </script>

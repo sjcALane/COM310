@@ -13,30 +13,58 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Shared memory</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="watch">
+    <h2>Watch it happen</h2>
+    <div class="stage" data-role="stage"></div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="all">Play all</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
-  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
   <div class="files">C code: <a href="shm_producer.c">shm_producer.c</a>, <a href="shm_consumer.c">shm_consumer.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
+Player({
+  root: 'watch',
+  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
+  clips: [
+    { src: 'clips/01.mp4', text: "Normally the OS keeps processes apart. Each process's memory maps to its own part of physical memory, so neither one can touch the other's." },
+    { src: 'clips/02.mp4', text: "shm_open() creates a shared memory object named /OS, and mmap() maps it into the producer's memory. The producer's ptr now points at it." },
+    { src: 'clips/03.mp4', text: "The producer writes the message through ptr. It's an ordinary memory write with no system call, which is why shared memory is fast." },
+    { src: 'clips/04.mp4', text: "The consumer opens /OS and maps it too, so its ptr points at the same physical memory. In our demo the producer has already exited by now, but /OS stays until something removes it." },
+    { src: 'clips/05.mp4', text: "The consumer sees the message right away. Reading it is an ordinary memory read too." },
+    { src: 'clips/06.mp4', text: "shm_unlink() removes /OS. The mappings go away, and the OS can reuse that memory." }
+  ]
+});
+
 function prod(use, st, hot) {
   return { title: 'Producer', tag: 'P', rows: [['Real ID', '1000'], ['Mapped /OS', use, hot], ['State', st]] };
 }
@@ -52,6 +80,7 @@ var P_OUT = 'Producer: wrote "Hello World!" to /OS';
 var C_OUT = 'Consumer: read "Hello World!" from /OS';
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline', M: 'dashed' },
   code: [
     '-- producer --',

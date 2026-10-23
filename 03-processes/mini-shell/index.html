@@ -13,29 +13,65 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>A tiny shell</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="figure">
+    <h2>See it on a timeline</h2>
+    <div class="fig">
+      <svg viewBox="0 0 1000 330" role="img" aria-label="Timeline of a shell running two commands, each in a new child process">
+        <text x="20" y="64">Shell 1000</text>
+        <text x="20" y="164">Child 1001</text>
+        <text x="20" y="264">Child 1002</text>
+        <line class="run" x1="150" y1="58" x2="270" y2="58"/>
+        <line class="wait" x1="270" y1="58" x2="460" y2="58"/>
+        <line class="run" x1="460" y1="58" x2="590" y2="58"/>
+        <line class="wait" x1="590" y1="58" x2="780" y2="58"/>
+        <line class="run" x1="780" y1="58" x2="900" y2="58"/>
+        <circle class="end" cx="900" cy="58" r="6"/>
+        <text x="160" y="40" class="note mono">mysh&gt; date</text>
+        <text x="470" y="40" class="note mono">mysh&gt; ls</text>
+        <text x="790" y="40" class="note mono">mysh&gt; exit</text>
+        <line class="tick" x1="270" y1="30" x2="270" y2="180"/>
+        <line class="tick" x1="590" y1="30" x2="590" y2="280"/>
+        <text x="280" y="88" class="note mono">fork()</text>
+        <text x="600" y="88" class="note mono">fork()</text>
+        <line class="run" x1="270" y1="158" x2="460" y2="158"/>
+        <circle class="end" cx="460" cy="158" r="6"/>
+        <text x="280" y="190" class="note mono">exec("date")</text>
+        <text x="470" y="164" class="note">exits</text>
+        <line class="run" x1="590" y1="258" x2="780" y2="258"/>
+        <circle class="end" cx="780" cy="258" r="6"/>
+        <text x="600" y="290" class="note mono">exec("ls")</text>
+        <text x="790" y="264" class="note">exits</text>
+        <line class="run" x1="150" y1="318" x2="200" y2="318"/><text x="210" y="324" class="note">running</text>
+        <line class="wait" x1="320" y1="318" x2="370" y2="318"/><text x="380" y="324" class="note">waiting in wait()</text>
+      </svg>
+    </div>
+    <p class="cap">Every command gets its own new child with a new ID. The shell waits while that child runs, then prints the next prompt.</p>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
   <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="mini_shell.c">mini_shell.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
 function shell(f, st) {
   return { title: 'Shell', tag: 'S', rows: [['Real ID', '1000'], ['forkreturn', f], ['Program', 'mini_shell'], ['State', st]] };
@@ -47,6 +83,7 @@ var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
 var DATE = 'Fri Oct 23 16:45:12 EDT 2026';
 
 Stepper({
+  root: 'trace',
   tags: { S: 'solid', C: 'outline' },
   code: [
     'loop forever:',

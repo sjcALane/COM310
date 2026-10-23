@@ -13,50 +13,47 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1><code>exec()</code> replaces the program</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="watch">
+    <h2>Watch it happen</h2>
+    <div class="stage" data-role="stage"></div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="all">Play all</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="program">
+    <h2>The program</h2>
+    <div class="code" aria-label="Program">
+      <div class="ln"><span class="marks"></span>print "I am process", my_id</div>
+      <div class="ln"><span class="marks"></span>exec("ps", my_id)</div>
+      <div class="ln"><span class="marks"></span>print "This line never prints"</div>
+    </div>
+    <div>
+      <div class="out-label">What it prints</div>
+      <div class="out">I am process 1000 and I'm about to run ps<br>  PID COMMAND<br> 1000 ps</div>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
   <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="exec_replace.c">exec_replace.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
-function proc(prog, st, hot) {
-  return { title: 'The process', tag: 'P', rows: [['Real ID', '1000'], ['Program', prog, hot], ['State', st]] };
-}
-
-Stepper({
-  tags: { P: 'solid' },
-  code: [
-    'print "I am process", my_id',
-    'exec("ps", my_id)',
-    'print "This line never prints"'
-  ],
-  steps: [
-    { at: [{ line: 0, tag: 'P' }], panels: [proc('exec_replace', 'running')], out: ["I am process 1000 and I'm about to run ps"],
-      text: `One process, ID 1000, running our program. It prints its ID.` },
-    { at: [{ line: 1, tag: 'P' }], panels: [proc('ps', 'running', true)], out: ["I am process 1000 and I'm about to run ps"],
-      text: `exec() doesn't make a new process. It wipes out this process's code and variables and loads the ps program in their place. The ID stays 1000.` },
-    { at: [], panels: [proc('ps', 'running')], out: ["I am process 1000 and I'm about to run ps", '  PID COMMAND', ' 1000 ps'],
-      text: `Now ps runs. We asked it to report on process 1000, and it shows that 1000 is running ps. Same process, different program.` },
-    { at: [], panels: [proc('ps', 'finished')], out: ["I am process 1000 and I'm about to run ps", '  PID COMMAND', ' 1000 ps'],
-      text: `When ps finishes, the process ends. The last line of our program never ran, because our program was gone the moment exec() worked. exec() only comes back if it fails.` }
+Player({
+  root: 'watch',
+  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
+  clips: [
+    { src: 'clips/01.mp4', text: "Process 1000 is running our program. Its memory holds our code, our variables, a heap, and a stack." },
+    { src: 'clips/02.mp4', text: "exec() throws away everything in that memory. The process itself stays, and so does its ID." },
+    { src: 'clips/03.mp4', text: "The OS loads the ps program from disk into the same process and starts it from the beginning." },
+    { src: 'clips/04.mp4', text: "Our program is gone, so the line after exec() can never run. exec() only comes back if it fails." }
   ]
 });
 </script>

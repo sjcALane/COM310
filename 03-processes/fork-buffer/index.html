@@ -13,29 +13,30 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>The print buffer and <code>fork()</code></h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
-
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
   <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="fork_buffer.c">fork_buffer.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
 <script>
 function parent(buf, st, hot) {
   return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['Print buffer', buf, hot], ['State', st]] };
@@ -46,6 +47,7 @@ function child(buf, st, hot) {
 var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist yet" };
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline' },
   code: [
     'print "hello "',

@@ -13,30 +13,40 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Producer and consumer with a bounded buffer</h1>
 
-  <div class="grid">
-    <div class="code" id="code" aria-label="Program"></div>
-    <div class="panels" id="panels"></div>
-  </div>
+  <section class="block" id="sim">
+    <h2>Try it yourself</h2>
+    <p class="lead">Make the producer faster than the consumer, then the other way around. Watch who ends up waiting, and try different sizes.</p>
+    <div data-role="body"></div>
+  </section>
 
-  <div>
-    <div class="out-label">Screen output</div>
-    <div class="out" id="out"></div>
-  </div>
+  <section class="block" id="trace">
+    <h2>Trace the code</h2>
+    <div class="grid">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="panels" data-role="panels"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Next</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+  </section>
 
-  <p class="cap" id="cap" aria-live="polite"></p>
-
-  <div class="bar">
-    <button id="back">Back</button>
-    <button id="next" class="primary">Next</button>
-    <button id="reset">Start over</button>
-    <span class="count" id="cnt"></span>
-  </div>
-  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
   <div class="files">C code: <a href="bounded.c">bounded.c</a></div>
 </div>
 
-<script src="../../assets/stepper.js"></script>
+<script src="../../assets/demo.js"></script>
+<script src="../../assets/buffer-sim.js"></script>
 <script>
+BufferSim({ root: 'sim', bounded: true, size: 4, produce: 0.5, consume: 1.2 });
+
 function prod(st) { return { title: 'Producer', tag: 'P', rows: [['State', st]] }; }
 function cons(st) { return { title: 'Consumer', tag: 'C', rows: [['State', st]] }; }
 function buf(s, inv, outv, hot) {
@@ -53,6 +63,7 @@ var O = ['Producer: added item 1', 'Producer: added item 2', 'Producer: added it
          'Consumer: took item 3', 'Consumer: took item 4', 'Consumer: took item 5'];
 
 Stepper({
+  root: 'trace',
   tags: { P: 'solid', C: 'outline', B: 'dashed' },
   code: [
     '-- producer --',
