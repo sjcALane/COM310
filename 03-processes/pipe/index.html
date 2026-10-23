@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Message passing with a pipe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>Message passing with a pipe</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="pipe_demo.c">pipe_demo.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function parent(r, w, st, hot) {
+  return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['fd[0] read end', r, hot === 'r'], ['fd[1] write end', w, hot === 'w'], ['State', st]] };
+}
+function child(r, w, st, hot) {
+  return { title: 'Child', tag: 'C', rows: [['Real ID', '1001'], ['fd[0] read end', r, hot === 'r'], ['fd[1] write end', w, hot === 'w'], ['State', st]] };
+}
+function pipe(holds, readers, writers, hot) {
+  return { title: 'The pipe', rows: [['Holds', holds, hot === 'holds'], ['Read ends open', readers, hot === 'readers'], ['Write ends open', writers, hot === 'writers']] };
+}
+var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist yet" };
+var OUT = ['Child read: Greetings'];
+
+Stepper({
+  tags: { P: 'solid', C: 'outline' },
+  code: [
+    'pipe(fd)',
+    'forkreturn = fork()',
+    'if forkreturn > 0:',
+    '    close(fd[0])',
+    '    write(fd[1], "Greetings")',
+    '    close(fd[1])',
+    '    wait()',
+    'else:',
+    '    close(fd[1])',
+    '    message = read(fd[0])',
+    '    print "Child read:", message',
+    '    close(fd[0])'
+  ],
+  steps: [
+    { at: [{ line: 0, tag: 'P' }], panels: [parent('open', 'open', 'running'), noChild, pipe('nothing', '1', '1')], out: [],
+      text: `pipe() asks the OS for a one-way channel and gives back two file descriptors. fd[0] is the read end and fd[1] is the write end. Right now the parent holds both.` },
+    { at: [{ line: 1, tag: 'P' }, { line: 1, tag: 'C' }], panels: [parent('open', 'open', 'running'), child('open', 'open', 'running'), pipe('nothing', '2', '2', 'readers')], out: [],
+      text: `fork() copies the open file descriptors along with everything else. Both processes now hold both ends of the same pipe.` },
+    { at: [{ line: 3, tag: 'P' }, { line: 8, tag: 'C' }], panels: [parent('closed', 'open', 'running', 'r'), child('open', 'closed', 'running', 'w'), pipe('nothing', '1', '1')], out: [],
+      text: `Each process closes the end it won't use. The parent only writes and the child only reads, so data flows one way, from parent to child.` },
+    { at: [{ line: 3, tag: 'P' }, { line: 9, tag: 'C' }], panels: [parent('closed', 'open', 'running'), child('open', 'closed', 'waiting for data'), pipe('nothing', '1', '1')], out: [],
+      text: `If the child reaches read() first, the pipe is still empty, so the child waits for data.` },
+    { at: [{ line: 4, tag: 'P' }, { line: 9, tag: 'C' }], panels: [parent('closed', 'open', 'running'), child('open', 'closed', 'waking up'), pipe('"Greetings"', '1', '1', 'holds')], out: [],
+      text: `The parent writes "Greetings" into the pipe, which wakes up the child.` },
+    { at: [{ line: 4, tag: 'P' }, { line: 9, tag: 'C' }], panels: [parent('closed', 'open', 'running'), child('open', 'closed', 'running'), pipe('nothing', '1', '1', 'holds')], out: [],
+      text: `The child reads the message. Once data is read out of a pipe, it's gone from the pipe.` },
+    { at: [{ line: 5, tag: 'P' }, { line: 10, tag: 'C' }], panels: [parent('closed', 'closed', 'running', 'w'), child('open', 'closed', 'running'), pipe('nothing', '1', '0', 'writers')], out: OUT,
+      text: `The child prints the message, and the parent closes its write end. With no write ends open, any later read() returns 0, which means end of file. If the parent skipped that close, a child reading in a loop would wait forever.` },
+    { at: [{ line: 6, tag: 'P' }, { line: 11, tag: 'C' }], panels: [parent('closed', 'closed', 'waking up'), child('closed', 'closed', 'finished', 'r'), pipe('nothing', '0', '0', 'readers')], out: OUT,
+      text: `The child closes its read end and exits, and the parent's wait() returns. The | in a shell command like ls | wc -l works the same way. The shell makes a pipe and connects one program's output to the other program's input.` }
+  ]
+});
+</script>
+</body>
+</html>

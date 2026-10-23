@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bounded buffer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>Producer and consumer with a bounded buffer</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="bounded.c">bounded.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function prod(st) { return { title: 'Producer', tag: 'P', rows: [['State', st]] }; }
+function cons(st) { return { title: 'Consumer', tag: 'C', rows: [['State', st]] }; }
+function buf(s, inv, outv, hot) {
+  hot = hot || [];
+  var rows = s.map(function (v, k) { return ['Slot ' + k, v, hot.indexOf('s' + k) >= 0]; });
+  rows.push(['in', inv, hot.indexOf('in') >= 0]);
+  rows.push(['out', outv, hot.indexOf('out') >= 0]);
+  return { title: 'Shared buffer (SIZE 4)', tag: 'B', rows: rows };
+}
+var F = 'free';
+var O = ['Producer: added item 1', 'Producer: added item 2', 'Producer: added item 3',
+         'Producer: buffer full, waiting', 'Consumer: took item 1', 'Producer: added item 4',
+         'Producer: buffer full, waiting', 'Consumer: took item 2', 'Producer: added item 5',
+         'Consumer: took item 3', 'Consumer: took item 4', 'Consumer: took item 5'];
+
+Stepper({
+  tags: { P: 'solid', C: 'outline', B: 'dashed' },
+  code: [
+    '-- producer --',
+    'for item = 1 to 5:',
+    '    while (in + 1) % SIZE == out: wait',
+    '    buffer[in] = item',
+    '    print "added", item',
+    '    in = (in + 1) % SIZE',
+    '-- consumer --',
+    'repeat 5 times:',
+    '    while in == out: wait',
+    '    item = buffer[out]',
+    '    print "took", item',
+    '    out = (out + 1) % SIZE',
+    '    sleep (the consumer is slow)'
+  ],
+  steps: [
+    { at: [{ line: 1, tag: 'P' }], panels: [prod('running'), cons('starting up'), buf([F, F, F, F], '0', '0')], out: [],
+      text: `The buffer has 4 slots. in is where the producer puts the next item, and out is where the consumer takes the next one. Both start at 0.` },
+    { at: [{ line: 5, tag: 'P' }], panels: [prod('running'), cons('starting up'), buf(['1', F, F, F], '1', '0', ['s0', 'in'])], out: O.slice(0, 1),
+      text: `The producer puts item 1 in slot 0 and moves in to 1.` },
+    { at: [{ line: 5, tag: 'P' }], panels: [prod('running'), cons('starting up'), buf(['1', '2', '3', F], '3', '0', ['s1', 's2', 'in'])], out: O.slice(0, 3),
+      text: `It adds items 2 and 3 the same way. Now in is 3.` },
+    { at: [{ line: 2, tag: 'P' }], panels: [prod('waiting'), cons('starting up'), buf(['1', '2', '3', F], '3', '0')], out: O.slice(0, 4),
+      text: `(3 + 1) % 4 is 0, which equals out, so the buffer counts as full even though slot 3 is free. If the producer used slot 3, in would wrap to 0 and equal out. But in == out is how the consumer spots an empty buffer, so full and empty would look the same. Leaving one slot open keeps them apart.` },
+    { at: [{ line: 2, tag: 'P' }, { line: 11, tag: 'C' }], panels: [prod('waiting'), cons('running'), buf([F, '2', '3', F], '3', '1', ['s0', 'out'])], out: O.slice(0, 5),
+      text: `The consumer finally starts. It takes item 1 from slot 0 and moves out to 1.` },
+    { at: [{ line: 5, tag: 'P' }, { line: 12, tag: 'C' }], panels: [prod('running'), cons('sleeping'), buf([F, '2', '3', '4'], '0', '1', ['s3', 'in'])], out: O.slice(0, 6),
+      text: `Now (3 + 1) % 4 is 0, which isn't out, so the producer can go. It puts item 4 in slot 3, and in wraps around to 0. That wraparound is what % SIZE does.` },
+    { at: [{ line: 2, tag: 'P' }, { line: 12, tag: 'C' }], panels: [prod('waiting'), cons('sleeping'), buf([F, '2', '3', '4'], '0', '1')], out: O.slice(0, 7),
+      text: `(0 + 1) % 4 is 1, which equals out, so the buffer is full again and the producer waits.` },
+    { at: [{ line: 2, tag: 'P' }, { line: 11, tag: 'C' }], panels: [prod('waiting'), cons('running'), buf([F, F, '3', '4'], '0', '2', ['s1', 'out'])], out: O.slice(0, 8),
+      text: `The consumer wakes up and takes item 2 from slot 1.` },
+    { at: [{ line: 5, tag: 'P' }, { line: 12, tag: 'C' }], panels: [prod('done'), cons('sleeping'), buf(['5', F, '3', '4'], '1', '2', ['s0', 'in'])], out: O.slice(0, 9),
+      text: `The producer puts item 5 in slot 0. That was its last item.` },
+    { at: [{ line: 11, tag: 'C' }], panels: [prod('done'), cons('done'), buf([F, F, F, F], '1', '1', ['out'])], out: O,
+      text: `The consumer takes items 3, 4, and 5. Now in and out are both 1, so the buffer is empty again. This time both sides can wait. The producer waits when the buffer is full, and the consumer waits when it's empty.` }
+  ]
+});
+</script>
+</body>
+</html>

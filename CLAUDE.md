@@ -25,8 +25,8 @@ Demo folders are lowercase with hyphens (`fork`, `round-robin`). C files use und
 1. Copy `_template/` to `NN-chapter-slug/demo-name/`. Fill in the `Stepper({...})` config, the title, the breadcrumb, and the file links.
 2. Write the C files. Compile each with `gcc -Wall` and run it on Linux before committing. Every file must compile with no warnings.
 3. Fill in the demo's README table.
-4. Add one line to the chapter README, in teaching order. Create the chapter README if it's new.
-5. Add the demo to the home README under its chapter heading, keeping chapters in number order.
+4. Add one line to the chapter README, in teaching order, under the right topic heading (for example "Creating processes" or "Interprocess communication"). Create the chapter README if it's new.
+5. Add the same line to the home README under its chapter and topic headings, keeping chapters in number order. The chapter README uses `##` for topics, and the home README uses `###`.
 6. Push, wait for the Pages build, and check that the walkthrough URL returns 200.
 
 ## Style
@@ -35,5 +35,5 @@ Demo folders are lowercase with hyphens (`fork`, `round-robin`). C files use und
 - Plain language, short sentences. No author name, department, or school on pages.
 - Use variable names that say what they hold. Use `forkreturn`, never `pid`, for the value fork() returns.
 - Keep pseudocode lines under about 44 characters, or the code box cuts them off on a projector.
-- Output shown on a page must match what the real C program prints.
+- Output shown on a page must match what the real C program prints. When two processes print, make the order repeatable (sleeps, printing before publishing a change) and run the program several times, including pinned to one CPU with `taskset -c 0`, before trusting it.
 - Changing `assets/` affects every demo, so open every demo page after a change to it.

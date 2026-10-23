@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unbounded buffer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>Producer and consumer with an unbounded buffer</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="unbounded.c">unbounded.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function prod(st) { return { title: 'Producer', tag: 'P', rows: [['State', st]] }; }
+function cons(st) { return { title: 'Consumer', tag: 'C', rows: [['State', st]] }; }
+function buf(items, inv, outv, hot) {
+  return { title: 'Shared buffer', tag: 'B', rows: [['Items waiting', items, hot === 'items'], ['in', inv, hot === 'in'], ['out', outv, hot === 'out']] };
+}
+var O = ['Consumer: buffer empty, waiting', 'Producer: added item 1', 'Consumer: took item 1',
+         'Producer: added item 2', 'Producer: added item 3', 'Producer: added item 4',
+         'Consumer: took item 2', 'Consumer: took item 3', 'Consumer: took item 4'];
+
+Stepper({
+  tags: { P: 'solid', C: 'outline', B: 'dashed' },
+  code: [
+    '-- producer --',
+    'for item = 1 to 4:',
+    '    buffer[in] = item',
+    '    print "added", item',
+    '    in = in + 1',
+    '-- consumer --',
+    'repeat 4 times:',
+    '    while in == out: wait',
+    '    item = buffer[out]',
+    '    print "took", item',
+    '    out = out + 1',
+    '    sleep (the consumer is slow)'
+  ],
+  steps: [
+    { at: [{ line: 7, tag: 'C' }], panels: [prod('starting up'), cons('waiting'), buf('none', '0', '0')], out: O.slice(0, 1),
+      text: `The buffer starts empty, so in and out are both 0. The consumer sees in == out, which means there's nothing to take, so it waits.` },
+    { at: [{ line: 4, tag: 'P' }, { line: 7, tag: 'C' }], panels: [prod('running'), cons('waiting'), buf('1', '1', '0', 'in')], out: O.slice(0, 2),
+      text: `The producer puts item 1 in the buffer and moves in forward. Now in and out are different, so there's something to take.` },
+    { at: [{ line: 4, tag: 'P' }, { line: 11, tag: 'C' }], panels: [prod('running'), cons('sleeping'), buf('none', '1', '1', 'out')], out: O.slice(0, 3),
+      text: `The consumer takes item 1 and moves out forward. Then it sleeps, because this consumer is slow.` },
+    { at: [{ line: 4, tag: 'P' }, { line: 11, tag: 'C' }], panels: [prod('done'), cons('sleeping'), buf('2, 3, 4', '4', '1', 'items')], out: O.slice(0, 6),
+      text: `While the consumer sleeps, the producer adds items 2, 3, and 4. It never checks whether the buffer is full, because an unbounded buffer never fills. The items just pile up.` },
+    { at: [{ line: 10, tag: 'C' }], panels: [prod('done'), cons('running'), buf('3, 4', '4', '2', 'out')], out: O.slice(0, 7),
+      text: `The consumer wakes up and takes item 2.` },
+    { at: [{ line: 10, tag: 'C' }], panels: [prod('done'), cons('done'), buf('none', '4', '4', 'out')], out: O,
+      text: `It takes items 3 and 4. Now in == out again, so the buffer is empty. Only the consumer ever had to wait. Real memory is finite, though, so real systems use a bounded buffer.` }
+  ]
+});
+</script>
+</body>
+</html>

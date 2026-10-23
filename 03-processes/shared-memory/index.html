@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shared memory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="../../assets/demo.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
+  <h1>Shared memory</h1>
+
+  <div class="grid">
+    <div class="code" id="code" aria-label="Program"></div>
+    <div class="panels" id="panels"></div>
+  </div>
+
+  <div>
+    <div class="out-label">Screen output</div>
+    <div class="out" id="out"></div>
+  </div>
+
+  <p class="cap" id="cap" aria-live="polite"></p>
+
+  <div class="bar">
+    <button id="back">Back</button>
+    <button id="next" class="primary">Next</button>
+    <button id="reset">Start over</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
+  <div class="files">C code: <a href="shm_producer.c">shm_producer.c</a>, <a href="shm_consumer.c">shm_consumer.c</a></div>
+</div>
+
+<script src="../../assets/stepper.js"></script>
+<script>
+function prod(use, st, hot) {
+  return { title: 'Producer', tag: 'P', rows: [['Real ID', '1000'], ['Mapped /OS', use, hot], ['State', st]] };
+}
+function cons(use, st, hot) {
+  return { title: 'Consumer', tag: 'C', rows: [['Real ID', '1050'], ['Mapped /OS', use, hot], ['State', st]] };
+}
+function mem(size, holds, hot) {
+  return { title: 'Shared memory /OS', tag: 'M', rows: [['Size', size, hot === 'size'], ['Holds', holds, hot === 'holds']] };
+}
+var noCons = { title: 'Consumer', tag: 'C', gone: 'Not started yet' };
+var MSG = '"Hello World!"';
+var P_OUT = 'Producer: wrote "Hello World!" to /OS';
+var C_OUT = 'Consumer: read "Hello World!" from /OS';
+
+Stepper({
+  tags: { P: 'solid', C: 'outline', M: 'dashed' },
+  code: [
+    '-- producer --',
+    'shm = shm_open("/OS", create)',
+    'ftruncate(shm, 4096)',
+    'ptr = mmap(shm)',
+    'write "Hello World!" at ptr',
+    '-- consumer --',
+    'shm = shm_open("/OS", read only)',
+    'ptr = mmap(shm)',
+    'print the text at ptr',
+    'shm_unlink("/OS")'
+  ],
+  steps: [
+    { at: [{ line: 1, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('0 bytes', 'nothing')], out: [],
+      text: `The producer asks the OS to create a shared memory object named /OS. Any process that knows the name can open it later.` },
+    { at: [{ line: 2, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('4096 bytes', 'nothing', 'size')], out: [],
+      text: `A new object starts with no size, so ftruncate() gives it 4096 bytes.` },
+    { at: [{ line: 3, tag: 'P' }], panels: [prod('yes, at ptr', 'running', true), noCons, mem('4096 bytes', 'nothing')], out: [],
+      text: `mmap() maps the object into the producer's own memory. From now on, ptr points straight into the shared memory.` },
+    { at: [{ line: 4, tag: 'P' }], panels: [prod('yes, at ptr', 'running'), noCons, mem('4096 bytes', MSG, 'holds')], out: [P_OUT],
+      text: `The producer writes the message. This is an ordinary memory write. No system call is needed to move the data, which is why shared memory is fast.` },
+    { at: [], panels: [prod('yes, at ptr', 'finished'), noCons, mem('4096 bytes', MSG)], out: [P_OUT],
+      text: `The producer exits, but the shared memory stays. It belongs to the OS, not to the producer.` },
+    { at: [{ line: 6, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('no', 'running'), mem('4096 bytes', MSG)], out: [P_OUT],
+      text: `Later, you start the consumer as a separate program. It isn't related to the producer at all. It opens /OS by name.` },
+    { at: [{ line: 7, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running', true), mem('4096 bytes', MSG)], out: [P_OUT],
+      text: `The consumer maps the same object into its own memory. Two different processes now see the same bytes.` },
+    { at: [{ line: 8, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running'), mem('4096 bytes', MSG)], out: [P_OUT, C_OUT],
+      text: `Reading the message is an ordinary memory read too.` },
+    { at: [{ line: 9, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'finished'), { title: 'Shared memory /OS', tag: 'M', gone: 'Removed' }], out: [P_OUT, C_OUT],
+      text: `shm_unlink() removes /OS. Shared memory stays around until something removes it or the computer restarts, so cleaning up matters. Run the consumer again now and it can't find /OS.` }
+  ]
+});
+</script>
+</body>
+</html>
