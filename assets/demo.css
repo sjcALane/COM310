@@ -114,3 +114,11 @@ button:disabled { opacity: 0.4; cursor: default; }
 .sim-log { min-height: 8.5em; }
 .sim-body { display: flex; flex-direction: column; gap: 18px; }
 .sim-body .out-label { margin-bottom: -12px; }
+.sync { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .sync { grid-template-columns: minmax(0, 1fr); } }
+.sync .ln { font-size: 18px; }
+.sync .marks { width: 56px; }
+.more { border: 1.5px solid var(--line); border-radius: 6px; padding: 10px 16px; }
+.more summary { cursor: pointer; font-weight: 600; }
+.more[open] summary { margin-bottom: 14px; }
+.more .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }

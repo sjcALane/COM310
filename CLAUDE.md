@@ -8,7 +8,7 @@ Interactive walkthroughs, animations, and C examples for COM310 Operating System
 README.md                     site home page, one section per chapter that has demos
 _config.yml                   keeps CLAUDE.md off the site
 assets/demo.css               shared look for every demo page
-assets/demo.js                Stepper (click-through), Player (animation clips), keyboard handling
+assets/demo.js                Stepper (click-through, optionally synced to animation clips), Player (clips alone), keyboard handling
 assets/buffer-sim.js          producer-consumer simulator, loaded only by the buffer pages
 _template/                    starting point for a new demo page, with every block type (not published)
 _anim/                        Manim sources for the animations (not published)
@@ -30,19 +30,22 @@ Not every demo gets the same treatment. Pick the blocks that fit the idea, usual
 
 | Block | Use it when | Examples |
 |---|---|---|
-| Watch (Manim animation) | The idea is something moving or changing shape: copying, replacing, mapping, flowing, branching | fork copying a process, exec swapping memory, the fork tree doubling, shared memory mappings, data through a pipe |
+| Watch and trace (synced) | There's an animation and code worth stepping through. One Next button moves the highlighted line and plays the matching clip | fork, exec, shared memory, pipe, fork-twice, exec-replace |
+| Watch (Manim animation alone) | The idea is something moving or changing shape and there's no code to step through | a concept overview with no program |
 | Try it (interactive simulation) | Students learn by changing a setting and seeing what happens | producer and consumer speeds and buffer size; later, scheduling algorithms and quantum size, page replacement with different frame counts |
 | Timeline (static SVG) | The point is when things happen relative to each other | zombie window in exit/wait, a shell spawning children over time |
 | Trace (click-through) | The point is which line runs and what each variable holds at each step | most C programs |
-| Program (static code and output) | The page has an animation and no trace, but students still need the code | fork-twice, exec-replace |
+| Program (static code and output) | Students need to see the code, but stepping through it adds nothing | a short program shown next to a timeline |
 
-A trace earns its place only if stepping line by line teaches something. If the code is three lines, show it as a Program block instead.
+A trace earns its place only if stepping line by line teaches something.
+
+When a page has an animation and code, always sync them. Write the trace first, then cut the animation to match it: one Manim section per trace step that changes the picture, named after the step (`step3-fork`), and no section for steps where the picture stays the same (a print, an if check). In the Stepper config, set `clips: true` and give those steps `clip: N`. Steps without a clip leave the video still. The trace text is the caption, so the animation doesn't need its own captions. Each process's variables go in the fold-out under the controls.
 
 ## Adding a demo
 
-1. Copy `_template/index.html` to `NN-chapter-slug/demo-name/`. Keep the blocks you need and delete the rest. Fill in the title, breadcrumb, file links, and the `Player({...})` and `Stepper({...})` configs.
+1. Copy `_template/index.html` to `NN-chapter-slug/demo-name/`. Keep the blocks you need and delete the rest. Fill in the title, breadcrumb, file links, and the `Stepper({...})` or `Player({...})` config.
 2. Write the C files. Compile each with `gcc -Wall -Wextra` and run it on Linux before committing. Every file must compile with no warnings.
-3. For an animation, write `_anim/<name>.py` using `osviz.py`. Start every clip with `self.next_section("name")` and end it with `hold(self)`. Render with `_anim/render.sh <name>.py <SceneName> NN-chapter-slug/demo-name`, which writes `clips/01.mp4` and `clips/01.webm` and so on. Manim needs `pip install manim` (in a virtual environment) and the IBM Plex fonts. Look at the last frame of every clip before publishing, since overlaps and off-screen text only show up there.
+3. For an animation, write `_anim/<name>.py` using `osviz.py`. Start every clip with `self.next_section("name")` and end it with `hold(self)`. Render with `_anim/render.sh <name>.py <SceneName> NN-chapter-slug/demo-name`, which writes `clips/01.mp4` and `clips/01.webm` and so on. Manim needs `pip install manim` (in a virtual environment) and the IBM Plex fonts. Look at the last frame of every clip before publishing, since overlaps and off-screen text only show up there. Animate a box's outline before its label in the same `play()`, or the white box gets drawn over the label. To test Back on a synced page locally, serve the repo with a server that supports range requests (`pip install rangehttpserver`, then `python3 -m RangeHTTPServer`), since Python's built-in server can't seek inside videos.
 4. Fill in the demo's README table.
 5. Add one line to the chapter README, in teaching order, under the right topic heading (for example "Creating processes" or "Interprocess communication"). Create the chapter README if it's new.
 6. Add the same line to the home README under its chapter and topic headings, keeping chapters in number order. The chapter README uses `##` for topics, and the home README uses `###`.

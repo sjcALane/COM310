@@ -13,25 +13,11 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Shared memory</h1>
 
-  <section class="block" id="watch">
-    <h2>Watch it happen</h2>
-    <div class="stage" data-role="stage"></div>
-    <p class="cap" data-role="cap" aria-live="polite"></p>
-    <div class="bar">
-      <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Play</button>
-      <button data-role="replay">Replay</button>
-      <button data-role="all">Play all</button>
-      <button data-role="reset">Start over</button>
-      <span class="count" data-role="count"></span>
-    </div>
-  </section>
-
   <section class="block" id="trace">
-    <h2>Trace the code</h2>
-    <div class="grid">
+    <h2>Watch and trace the code</h2>
+    <div class="sync">
       <div class="code" data-role="code" aria-label="Program"></div>
-      <div class="panels" data-role="panels"></div>
+      <div class="stage" data-role="stage"></div>
     </div>
     <div>
       <div class="out-label">Screen output</div>
@@ -40,31 +26,23 @@
     <p class="cap" data-role="cap" aria-live="polite"></p>
     <div class="bar">
       <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Next</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
       <button data-role="reset">Start over</button>
       <span class="count" data-role="count"></span>
     </div>
+    <details class="more">
+      <summary>Show what each process holds at this step</summary>
+      <div class="panels" data-role="panels"></div>
+    </details>
   </section>
 
-  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="shm_producer.c">shm_producer.c</a>, <a href="shm_consumer.c">shm_consumer.c</a></div>
 </div>
 
 <script src="../../assets/demo.js"></script>
 <script>
-Player({
-  root: 'watch',
-  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
-  clips: [
-    { src: 'clips/01.mp4', text: "Normally the OS keeps processes apart. Each process's memory maps to its own part of physical memory, so neither one can touch the other's." },
-    { src: 'clips/02.mp4', text: "shm_open() creates a shared memory object named /OS, and mmap() maps it into the producer's memory. The producer's ptr now points at it." },
-    { src: 'clips/03.mp4', text: "The producer writes the message through ptr. It's an ordinary memory write with no system call, which is why shared memory is fast." },
-    { src: 'clips/04.mp4', text: "The consumer opens /OS and maps it too, so its ptr points at the same physical memory. In our demo the producer has already exited by now, but /OS stays until something removes it." },
-    { src: 'clips/05.mp4', text: "The consumer sees the message right away. Reading it is an ordinary memory read too." },
-    { src: 'clips/06.mp4', text: "shm_unlink() removes /OS. The mappings go away, and the OS can reuse that memory." }
-  ]
-});
-
 function prod(use, st, hot) {
   return { title: 'Producer', tag: 'P', rows: [['Real ID', '1000'], ['Mapped /OS', use, hot], ['State', st]] };
 }
@@ -81,6 +59,7 @@ var C_OUT = 'Consumer: read "Hello World!" from /OS';
 
 Stepper({
   root: 'trace',
+  clips: true,
   tags: { P: 'solid', C: 'outline', M: 'dashed' },
   code: [
     '-- producer --',
@@ -95,23 +74,23 @@ Stepper({
     'shm_unlink("/OS")'
   ],
   steps: [
-    { at: [{ line: 1, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('0 bytes', 'nothing')], out: [],
+    { clip: 1, at: [{ line: 1, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('0 bytes', 'nothing')], out: [],
       text: `The producer asks the OS to create a shared memory object named /OS. Any process that knows the name can open it later.` },
-    { at: [{ line: 2, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('4096 bytes', 'nothing', 'size')], out: [],
+    { clip: 2, at: [{ line: 2, tag: 'P' }], panels: [prod('no', 'running'), noCons, mem('4096 bytes', 'nothing', 'size')], out: [],
       text: `A new object starts with no size, so ftruncate() gives it 4096 bytes.` },
-    { at: [{ line: 3, tag: 'P' }], panels: [prod('yes, at ptr', 'running', true), noCons, mem('4096 bytes', 'nothing')], out: [],
+    { clip: 3, at: [{ line: 3, tag: 'P' }], panels: [prod('yes, at ptr', 'running', true), noCons, mem('4096 bytes', 'nothing')], out: [],
       text: `mmap() maps the object into the producer's own memory. From now on, ptr points straight into the shared memory.` },
-    { at: [{ line: 4, tag: 'P' }], panels: [prod('yes, at ptr', 'running'), noCons, mem('4096 bytes', MSG, 'holds')], out: [P_OUT],
+    { clip: 4, at: [{ line: 4, tag: 'P' }], panels: [prod('yes, at ptr', 'running'), noCons, mem('4096 bytes', MSG, 'holds')], out: [P_OUT],
       text: `The producer writes the message. This is an ordinary memory write. No system call is needed to move the data, which is why shared memory is fast.` },
-    { at: [], panels: [prod('yes, at ptr', 'finished'), noCons, mem('4096 bytes', MSG)], out: [P_OUT],
+    { clip: 5, at: [], panels: [prod('yes, at ptr', 'finished'), noCons, mem('4096 bytes', MSG)], out: [P_OUT],
       text: `The producer exits, but the shared memory stays. It belongs to the OS, not to the producer.` },
-    { at: [{ line: 6, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('no', 'running'), mem('4096 bytes', MSG)], out: [P_OUT],
+    { clip: 6, at: [{ line: 6, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('no', 'running'), mem('4096 bytes', MSG)], out: [P_OUT],
       text: `Later, you start the consumer as a separate program. It isn't related to the producer at all. It opens /OS by name.` },
-    { at: [{ line: 7, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running', true), mem('4096 bytes', MSG)], out: [P_OUT],
+    { clip: 7, at: [{ line: 7, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running', true), mem('4096 bytes', MSG)], out: [P_OUT],
       text: `The consumer maps the same object into its own memory. Two different processes now see the same bytes.` },
-    { at: [{ line: 8, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running'), mem('4096 bytes', MSG)], out: [P_OUT, C_OUT],
+    { clip: 8, at: [{ line: 8, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'running'), mem('4096 bytes', MSG)], out: [P_OUT, C_OUT],
       text: `Reading the message is an ordinary memory read too.` },
-    { at: [{ line: 9, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'finished'), { title: 'Shared memory /OS', tag: 'M', gone: 'Removed' }], out: [P_OUT, C_OUT],
+    { clip: 9, at: [{ line: 9, tag: 'C' }], panels: [prod('yes, at ptr', 'finished'), cons('yes, at ptr', 'finished'), { title: 'Shared memory /OS', tag: 'M', gone: 'Removed' }], out: [P_OUT, C_OUT],
       text: `shm_unlink() removes /OS. Shared memory stays around until something removes it or the computer restarts, so cleaning up matters. Run the consumer again now and it can't find /OS.` }
   ]
 });

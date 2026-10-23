@@ -5,8 +5,9 @@
 set -e
 cd "$(dirname "$0")"
 src="${1:?}"; scene="${2:?}"; dest="../${3:?}/clips"
-manim -qm --disable_caching --save_sections -o "$scene" "$src" "$scene"
 secdir="media/videos/${src%.py}/720p30/sections"
+rm -rf "${secdir:?}"                      # drop sections left over from an earlier cut
+manim -qm --disable_caching --save_sections -o "$scene" "$src" "$scene"
 rm -rf "${dest:?}"; mkdir -p "$dest"
 i=1
 for f in $(ls "$secdir"/"$scene"_*.mp4 | sort); do

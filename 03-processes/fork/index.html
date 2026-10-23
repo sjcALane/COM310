@@ -13,25 +13,11 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1>Tracing <code>fork()</code></h1>
 
-  <section class="block" id="watch">
-    <h2>Watch it happen</h2>
-    <div class="stage" data-role="stage"></div>
-    <p class="cap" data-role="cap" aria-live="polite"></p>
-    <div class="bar">
-      <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Play</button>
-      <button data-role="replay">Replay</button>
-      <button data-role="all">Play all</button>
-      <button data-role="reset">Start over</button>
-      <span class="count" data-role="count"></span>
-    </div>
-  </section>
-
   <section class="block" id="trace">
-    <h2>Trace the code</h2>
-    <div class="grid">
+    <h2>Watch and trace the code</h2>
+    <div class="sync">
       <div class="code" data-role="code" aria-label="Program"></div>
-      <div class="panels" data-role="panels"></div>
+      <div class="stage" data-role="stage"></div>
     </div>
     <div>
       <div class="out-label">Screen output</div>
@@ -40,29 +26,23 @@
     <p class="cap" data-role="cap" aria-live="polite"></p>
     <div class="bar">
       <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Next</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
       <button data-role="reset">Start over</button>
       <span class="count" data-role="count"></span>
     </div>
+    <details class="more">
+      <summary>Show what each process holds at this step</summary>
+      <div class="panels" data-role="panels"></div>
+    </details>
   </section>
 
-  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="fork_demo.c">fork_demo.c</a></div>
 </div>
 
 <script src="../../assets/demo.js"></script>
 <script>
-Player({
-  root: 'watch',
-  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
-  clips: [
-    { src: 'clips/01.mp4', text: "Before fork() there's one process, ID 1000. Its memory holds the program's code, its variables like x = 10, and its stack." },
-    { src: 'clips/02.mp4', text: "fork() asks the OS to copy the whole process. The copy is the child. It gets a new ID, 1001, but the same code, the same variables, and the same spot in the program." },
-    { src: 'clips/03.mp4', text: "The only difference is what fork() returns. The parent gets the child's ID, 1001. The child gets 0." },
-    { src: 'clips/04.mp4', text: "From here on, each process has its own memory. When the child changes x to 15, the parent's x is still 10." }
-  ]
-});
-
 function parent(f, x, st, hot) {
   return { title: 'Parent', tag: 'P', rows: [
     ['Real ID (getpid)', '1000'], ['forkreturn', f, hot === 'f'], ['x', x, hot === 'x'], ['State', st]
@@ -77,6 +57,7 @@ var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
 
 Stepper({
   root: 'trace',
+  clips: true,
   tags: { P: 'solid', C: 'outline' },
   code: [
     'x = 10',
@@ -91,21 +72,21 @@ Stepper({
     '    print "Parent: x =", x'
   ],
   steps: [
-    { at: [{ line: 0, tag: 'P' }], panels: [parent('not set yet', '10', 'running'), noChild], out: [],
+    { clip: 1, at: [{ line: 0, tag: 'P' }], panels: [parent('not set yet', '10', 'running'), noChild], out: [],
       text: 'Only one process exists so far, the parent. The OS gave it ID 1000. It sets x to 10.' },
     { at: [{ line: 1, tag: 'P' }], panels: [parent('not set yet', '10', 'running'), noChild], out: ['Before fork'],
       text: 'The parent prints. There is still just one process.' },
-    { at: [{ line: 2, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('1001', '10', 'running', 'f'), child('0', '10', 'running', 'f')], out: ['Before fork'],
+    { clip: 2, at: [{ line: 2, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('1001', '10', 'running', 'f'), child('0', '10', 'running', 'f')], out: ['Before fork'],
       text: 'fork() copies the whole process. The copy is the child, and the OS gives it ID 1001. Now fork returns in both. The parent gets 1001, its child\'s ID. The child gets 0, which means "you\'re the copy."' },
     { at: [{ line: 3, tag: 'P' }, { line: 3, tag: 'C' }], panels: [parent('1001', '10', 'running'), child('0', '10', 'running')], out: ['Before fork'],
       text: 'Both processes run the same if statement, but their forkreturn values are different. The parent has 1001, so it goes to else. The child has 0, so it goes into the if.' },
-    { at: [{ line: 8, tag: 'P' }, { line: 4, tag: 'C' }], panels: [parent('1001', '10', 'waiting', 'x'), child('0', '15', 'running', 'x')], out: ['Before fork'],
+    { clip: 3, at: [{ line: 8, tag: 'P' }, { line: 4, tag: 'C' }], panels: [parent('1001', '10', 'waiting', 'x'), child('0', '15', 'running', 'x')], out: ['Before fork'],
       text: 'The parent calls wait() and sleeps until the child finishes. The child changes x to 15, but only in its own copy. The parent\'s x is still 10.' },
     { at: [{ line: 8, tag: 'P' }, { line: 5, tag: 'C' }], panels: [parent('1001', '10', 'waiting'), child('0', '15', 'running')], out: ['Before fork', 'Child: x = 15'],
       text: 'The child prints its x.' },
-    { at: [{ line: 8, tag: 'P' }, { line: 6, tag: 'C' }], panels: [parent('1001', '10', 'waking up'), child('0', '15', 'finished')], out: ['Before fork', 'Child: x = 15'],
+    { clip: 4, at: [{ line: 8, tag: 'P' }, { line: 6, tag: 'C' }], panels: [parent('1001', '10', 'waking up'), child('0', '15', 'finished')], out: ['Before fork', 'Child: x = 15'],
       text: 'The child calls exit() and is done. The OS tells the parent that its child finished, so the parent wakes up.' },
-    { at: [{ line: 9, tag: 'P' }], panels: [parent('1001', '10', 'running', 'x'), noChild], out: ['Before fork', 'Child: x = 15', 'Parent: x = 10'],
+    { clip: 5, at: [{ line: 9, tag: 'P' }], panels: [parent('1001', '10', 'running', 'x'), noChild], out: ['Before fork', 'Child: x = 15', 'Parent: x = 10'],
       text: 'The parent prints its x, which is still 10. Two processes means two separate copies of every variable.' }
   ]
 });

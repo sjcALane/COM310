@@ -13,25 +13,11 @@
   <div class="crumbs"><a href="../../">COM310</a> / <a href="../">Processes</a></div>
   <h1><code>fork()</code> then <code>exec()</code></h1>
 
-  <section class="block" id="watch">
-    <h2>Watch it happen</h2>
-    <div class="stage" data-role="stage"></div>
-    <p class="cap" data-role="cap" aria-live="polite"></p>
-    <div class="bar">
-      <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Play</button>
-      <button data-role="replay">Replay</button>
-      <button data-role="all">Play all</button>
-      <button data-role="reset">Start over</button>
-      <span class="count" data-role="count"></span>
-    </div>
-  </section>
-
   <section class="block" id="trace">
-    <h2>Trace the code</h2>
-    <div class="grid">
+    <h2>Watch and trace the code</h2>
+    <div class="sync">
       <div class="code" data-role="code" aria-label="Program"></div>
-      <div class="panels" data-role="panels"></div>
+      <div class="stage" data-role="stage"></div>
     </div>
     <div>
       <div class="out-label">Screen output</div>
@@ -40,30 +26,23 @@
     <p class="cap" data-role="cap" aria-live="polite"></p>
     <div class="bar">
       <button data-role="back">Back</button>
-      <button data-role="next" class="primary">Next</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
       <button data-role="reset">Start over</button>
       <span class="count" data-role="count"></span>
     </div>
+    <details class="more">
+      <summary>Show what each process holds at this step</summary>
+      <div class="panels" data-role="panels"></div>
+    </details>
   </section>
 
-  <div class="hint">The arrow keys and the space bar control the section you clicked last.</div>
+  <div class="hint">You can also use the arrow keys or the space bar.</div>
   <div class="files">C code: <a href="fork_exec.c">fork_exec.c</a></div>
 </div>
 
 <script src="../../assets/demo.js"></script>
 <script>
-Player({
-  root: 'watch',
-  intro: "Press Play to start. Each click of Next plays the next part and then pauses.",
-  clips: [
-    { src: 'clips/01.mp4', text: "The parent, process 1000, is running fork_exec." },
-    { src: 'clips/02.mp4', text: "fork() makes the child, process 1001, an exact copy running the same program." },
-    { src: 'clips/03.mp4', text: "The parent calls wait() and sleeps. The child calls exec(\"ls\"), which replaces its program with ls. It's still process 1001." },
-    { src: 'clips/04.mp4', text: "ls lists the files in the folder and exits." },
-    { src: 'clips/05.mp4', text: "The parent wakes up and prints Child complete. fork() made the new process, and exec() gave it a new program." }
-  ]
-});
-
 function parent(f, st) {
   return { title: 'Parent', tag: 'P', rows: [['Real ID', '1000'], ['forkreturn', f], ['Program', 'fork_exec'], ['State', st]] };
 }
@@ -74,6 +53,7 @@ var noChild = { title: 'Child', tag: 'C', gone: "Doesn't exist right now" };
 
 Stepper({
   root: 'trace',
+  clips: true,
   tags: { P: 'solid', C: 'outline' },
   code: [
     'forkreturn = fork()',
@@ -86,19 +66,19 @@ Stepper({
     '    print "Child complete"'
   ],
   steps: [
-    { at: [{ line: 0, tag: 'P' }], panels: [parent('not set yet', 'running'), noChild], out: [],
+    { clip: 1, at: [{ line: 0, tag: 'P' }], panels: [parent('not set yet', 'running'), noChild], out: [],
       text: `One process, the parent, ID 1000. It's about to call fork().` },
-    { at: [{ line: 0, tag: 'P' }, { line: 0, tag: 'C' }], panels: [parent('1001', 'running'), child('fork_exec (a copy)', 'running')], out: [],
+    { clip: 2, at: [{ line: 0, tag: 'P' }, { line: 0, tag: 'C' }], panels: [parent('1001', 'running'), child('fork_exec (a copy)', 'running')], out: [],
       text: `fork() makes the child, a copy running the same program. The parent gets 1001 and the child gets 0.` },
     { at: [{ line: 1, tag: 'P' }, { line: 1, tag: 'C' }], panels: [parent('1001', 'running'), child('fork_exec (a copy)', 'running')], out: [],
       text: `Both check forkreturn. The parent goes to else, and the child goes into the if.` },
-    { at: [{ line: 6, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('1001', 'waiting'), child('ls', 'running', true)], out: [],
+    { clip: 3, at: [{ line: 6, tag: 'P' }, { line: 2, tag: 'C' }], panels: [parent('1001', 'waiting'), child('ls', 'running', true)], out: [],
       text: `The parent waits. The child calls exec("ls"), which replaces the child's program with ls. It's still process 1001, just running different code.` },
     { at: [{ line: 6, tag: 'P' }], panels: [parent('1001', 'waiting'), child('ls', 'running')], out: ['fork_exec  fork_exec.c'],
       text: `The child is running ls now, so it lists the files in the folder. The two lines after exec() never run, because that code isn't in the child anymore.` },
-    { at: [{ line: 6, tag: 'P' }], panels: [parent('1001', 'waking up'), child('ls', 'finished')], out: ['fork_exec  fork_exec.c'],
+    { clip: 4, at: [{ line: 6, tag: 'P' }], panels: [parent('1001', 'waking up'), child('ls', 'finished')], out: ['fork_exec  fork_exec.c'],
       text: `ls finishes and the child exits. The OS wakes the parent up.` },
-    { at: [{ line: 7, tag: 'P' }], panels: [parent('1001', 'running'), noChild], out: ['fork_exec  fork_exec.c', 'Child complete'],
+    { clip: 5, at: [{ line: 7, tag: 'P' }], panels: [parent('1001', 'running'), noChild], out: ['fork_exec  fork_exec.c', 'Child complete'],
       text: `The parent prints its message. fork() made the new process, and exec() gave it a new program. That pair is how almost every program on Linux gets started.` }
   ]
 });

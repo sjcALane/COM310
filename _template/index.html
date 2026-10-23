@@ -15,7 +15,33 @@
 
   <!-- Pick only the blocks that fit the idea. Delete the rest. See CLAUDE.md for when to use each. -->
 
-  <!-- WATCH: Manim animation clips. Needs clips/01.mp4 + 01.webm, ... rendered with _anim/render.sh -->
+  <!-- WATCH AND TRACE: code beside an animation, one Next button for both. Use this whenever a page has
+       an animation and code. Needs clips/01.mp4 + 01.webm, ... rendered with _anim/render.sh -->
+  <section class="block" id="trace">
+    <h2>Watch and trace the code</h2>
+    <div class="sync">
+      <div class="code" data-role="code" aria-label="Program"></div>
+      <div class="stage" data-role="stage"></div>
+    </div>
+    <div>
+      <div class="out-label">Screen output</div>
+      <div class="out" data-role="out"></div>
+    </div>
+    <p class="cap" data-role="cap" aria-live="polite"></p>
+    <div class="bar">
+      <button data-role="back">Back</button>
+      <button data-role="next" class="primary">Play</button>
+      <button data-role="replay">Replay</button>
+      <button data-role="reset">Start over</button>
+      <span class="count" data-role="count"></span>
+    </div>
+    <details class="more">
+      <summary>Show what each process holds at this step</summary>
+      <div class="panels" data-role="panels"></div>
+    </details>
+  </section>
+
+  <!-- WATCH: animation clips on their own, for an idea with no code to step through -->
   <section class="block" id="watch">
     <h2>Watch it happen</h2>
     <div class="stage" data-role="stage"></div>
@@ -55,7 +81,8 @@
     </div>
   </section>
 
-  <!-- TRACE: click-through of the code, one step per click -->
+  <!-- TRACE: click-through of the code with no animation. A page uses either this or WATCH AND TRACE, never both,
+       since both use id="trace". -->
   <section class="block" id="trace">
     <h2>Trace the code</h2>
     <div class="grid">
@@ -91,7 +118,7 @@ Player({
   ]
 });
 
-// TRACE: same format as before.
+// TRACE, or WATCH AND TRACE with clips: true.
 // code:  the pseudocode, one line per string (under about 44 characters).
 // tags:  label for each process or thread and its style (solid, outline, dashed, or double).
 // panelColumns: optional. Set to 2 for four or more boxes.
@@ -101,12 +128,14 @@ Player({
 //           Use { title, tag, gone: "Doesn't exist right now" } for a process that hasn't started or has ended.
 //   out:    everything printed so far.
 //   text:   the explanation under the output.
+//   clip:   with clips: true, the clip to play when this step is reached. Leave it off and the video holds still.
 Stepper({
   root: 'trace',
+  clips: true,
   tags: { A: 'solid', B: 'outline' },
   code: ['first line of pseudocode', 'second line'],
   steps: [
-    { at: [{ line: 0, tag: 'A' }], panels: [{ title: 'Process A', tag: 'A', rows: [['x', '1']] }], out: [], text: 'Explain the first step.' },
+    { clip: 1, at: [{ line: 0, tag: 'A' }], panels: [{ title: 'Process A', tag: 'A', rows: [['x', '1']] }], out: [], text: 'Explain the first step.' },
     { at: [{ line: 1, tag: 'A' }], panels: [{ title: 'Process A', tag: 'A', rows: [['x', '2', true]] }], out: ['printed'], text: 'Explain the second step.' }
   ]
 });
